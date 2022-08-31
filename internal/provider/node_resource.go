@@ -2,10 +2,9 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"github.com/OnFinality-io/onf-cli/pkg/models"
 	onf "github.com/OnFinality-io/onf-cli/pkg/service"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -13,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"log"
+	"strings"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -28,18 +29,16 @@ type onFinalityNode struct {
 	WorkspaceId    types.Int64  `tfsdk:"workspace_id"`
 	NetworkSpecKey types.String `tfsdk:"network_spec_key"`
 	NodeSpec       nodeSpec     `tfsdk:"node_spec"`
-	//NodeSpecKey        types.String `tfsdk:"node_spec_key"`
-	//NodeSpecMultiplier types.Int64  `tfsdk:"node_spec_multiplier"`
-	NodeType     types.String `tfsdk:"node_type"`
-	NodeName     types.String `tfsdk:"node_name"`
-	ClusterHash  types.String `tfsdk:"cluster_hash"`
-	Storage      types.String `tfsdk:"storage"`
-	ImageVersion types.String `tfsdk:"image_version"`
-	Id           types.Int64  `tfsdk:"id"`
+	NodeType       types.String `tfsdk:"node_type"`
+	NodeName       types.String `tfsdk:"node_name"`
+	ClusterHash    types.String `tfsdk:"cluster_hash"`
+	Storage        types.String `tfsdk:"storage"`
+	ImageVersion   types.String `tfsdk:"image_version"`
+	Image          types.String `tfsdk:"image"`
+	Id             types.Int64  `tfsdk:"id"`
 }
 
 func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	log.Println("Ian-recource.go_GetSchema")
 	return tfsdk.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Example resource",
@@ -63,16 +62,6 @@ func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagn
 					"multiplier": {Type: types.Int64Type, Required: true},
 				}),
 			},
-			//"node_spec_key": {
-			//	MarkdownDescription: "Example configurable attribute",
-			//	Required:            true,
-			//	Type:                types.StringType,
-			//},
-			//"node_spec_multiplier": {
-			//	MarkdownDescription: "Example configurable attribute",
-			//	Required:            true,
-			//	Type:                types.Int64Type,
-			//},
 			"node_type": {
 				MarkdownDescription: "Example configurable attribute",
 				Required:            true,
@@ -96,6 +85,11 @@ func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagn
 			"image_version": {
 				MarkdownDescription: "Example configurable attribute",
 				Required:            true,
+				Type:                types.StringType,
+			},
+			"image": {
+				MarkdownDescription: "Example configurable attribute",
+				Computed:            true,
 				Type:                types.StringType,
 			},
 			"id": {
@@ -156,14 +150,15 @@ func (r nodeResource) Create(ctx context.Context, req resource.CreateRequest, re
 		PublicPort:     true,
 	})
 	if err != nil {
-		tflog.Error(ctx, "create node error:"+err.Error())
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create node, got error: %s", err))
 		return
 	}
 	data.Id = types.Int64{Value: int64(node.ID)}
+	data.Image = types.String{Value: node.Image}
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
-	tflog.Trace(ctx, "created a resource")
+	// tflog.Trace(ctx, "created a resource")
 
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -187,8 +182,32 @@ func (r nodeResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
 	//     return
 	// }
-
-	diags = resp.State.Set(ctx, &data)
+	node, err := onf.GetNodeDetail(uint64(data.WorkspaceId.Value), uint64(data.Id.Value))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to get node, got error: %s", err))
+		return
+	}
+	if node.Status == "terminated" {
+		tflog.Info(ctx, "Node has been terminated")
+		resp.State.RemoveResource(ctx)
+		return
+	}
+	imageSlice := strings.Split(node.Image, ":")
+	diags = resp.State.Set(ctx, &onFinalityNode{
+		WorkspaceId:    types.Int64{Value: int64(node.WorkspaceID)},
+		NetworkSpecKey: types.String{Value: node.NetworkSpecKey},
+		NodeSpec: nodeSpec{
+			Key:        types.String{Value: node.NodeSpec},
+			Multiplier: types.Int64{Value: int64(node.NodeSpecMultiplier)},
+		},
+		NodeType:     types.String{Value: node.NodeType},
+		NodeName:     types.String{Value: node.Name},
+		ClusterHash:  types.String{Value: node.ClusterHash},
+		Storage:      types.String{Value: node.Storage},
+		ImageVersion: types.String{Value: imageSlice[len(imageSlice)-1]},
+		Image:        types.String{Value: node.Image},
+		Id:           types.Int64{Value: int64(node.ID)},
+	})
 	resp.Diagnostics.Append(diags...)
 }
 

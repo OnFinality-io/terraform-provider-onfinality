@@ -70,9 +70,7 @@ func (p *onfinalityProvider) GetResources(ctx context.Context) (map[string]provi
 
 func (p *onfinalityProvider) GetDataSources(ctx context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
 	log.Println("Ian-GetDataSources")
-	return map[string]provider.DataSourceType{
-		"scaffolding_example": exampleDataSourceType{},
-	}, nil
+	return map[string]provider.DataSourceType{}, nil
 }
 
 func (p *onfinalityProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
