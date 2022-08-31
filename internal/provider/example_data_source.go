@@ -51,7 +51,7 @@ type exampleDataSourceData struct {
 }
 
 type exampleDataSource struct {
-	provider scaffoldingProvider
+	provider onfinalityProvider
 }
 
 func (d exampleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
