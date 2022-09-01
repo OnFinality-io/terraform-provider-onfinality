@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"log"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -43,7 +42,6 @@ type providerData struct {
 
 func (p *onfinalityProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data providerData
-	log.Println("Ian-Configure")
 	diags := req.Config.Get(ctx, &data)
 	onf.Init(data.AccessKey.Value, data.SecretKey.Value, "https://api.onfinality.io/api")
 	resp.Diagnostics.Append(diags...)
@@ -62,28 +60,25 @@ func (p *onfinalityProvider) Configure(ctx context.Context, req provider.Configu
 }
 
 func (p *onfinalityProvider) GetResources(ctx context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
-	log.Println("Ian-GetResources")
 	return map[string]provider.ResourceType{
 		"onfinality_node": onFinalityNode{},
 	}, nil
 }
 
 func (p *onfinalityProvider) GetDataSources(ctx context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	log.Println("Ian-GetDataSources")
 	return map[string]provider.DataSourceType{}, nil
 }
 
 func (p *onfinalityProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	log.Println("Ian-GetSchema")
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"access_key": {
-				MarkdownDescription: "Example provider attribute",
+				MarkdownDescription: "access key for https://app.onfinality.io, use env TF_VAR_onf_access_key to set up",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"secret_key": {
-				MarkdownDescription: "Example provider attribute",
+				MarkdownDescription: "secret key for https://app.onfinality.io, use env TF_VAR_onf_secret_key to set up",
 				Required:            true,
 				Type:                types.StringType,
 			},
@@ -92,9 +87,7 @@ func (p *onfinalityProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 }
 
 func New(version string) func() provider.Provider {
-	log.Println("Ian-New")
 	return func() provider.Provider {
-		log.Println("Ian-New Provider")
 		return &onfinalityProvider{
 			version: version,
 		}
@@ -107,7 +100,6 @@ func New(version string) func() provider.Provider {
 // asserted (e.g. provider: in.(*onfinalityProvider)), however using this can prevent
 // potential panics.
 func convertProviderType(in provider.Provider) (onfinalityProvider, diag.Diagnostics) {
-	log.Println("Ian-convertProviderType")
 	var diags diag.Diagnostics
 
 	p, ok := in.(*onfinalityProvider)

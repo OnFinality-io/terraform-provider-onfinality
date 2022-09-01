@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	k8sResource "k8s.io/apimachinery/pkg/api/resource"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -49,17 +48,17 @@ func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagn
 
 		Attributes: map[string]tfsdk.Attribute{
 			"workspace_id": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Workspace id, can get it from url https://app.onfinality.io/workspaces/<workspace_id>/nodes",
 				Required:            true,
 				Type:                types.Int64Type,
 			},
 			"network_spec_key": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Network of the node, can get from `onf network-spec list` & `onf network-spec list-backups`",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"node_spec": {
-				MarkdownDescription: "",
+				MarkdownDescription: "Node Spec of the node, always put key=\"unit\", 1 * unit ~ 0.5 cpu 1.5G mem",
 				Required:            true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"key":        {Type: types.StringType, Required: true},
@@ -67,46 +66,46 @@ func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagn
 				}),
 			},
 			"node_type": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "full or archive or validator, depends on network",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"node_name": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Name of the node",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"cluster_hash": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Cluster where the node will be deployed, check `onf info cluster` for all available clusters",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"storage": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Disk size of the node, <num>Gi , e.g 100Gi",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"image_version": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Image Version to use",
 				Required:            true,
 				Type:                types.StringType,
 			},
 			"image": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "The full image (with version)",
 				Computed:            true,
 				Type:                types.StringType,
 				PlanModifiers:       []tfsdk.AttributePlanModifier{NodeImageModifier()},
 			},
 			"id": {
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Node Id",
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					resource.UseStateForUnknown(),
 				},
 				Type: types.Int64Type,
 			},
 			"stopped": {
-				MarkdownDescription: "Example configurable attribute",
+				MarkdownDescription: "Change it to true will stop the node",
 				Optional:            true,
 				Computed:            true,
 				Type:                types.BoolType,
@@ -116,7 +115,6 @@ func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagn
 }
 
 func (t onFinalityNode) NewResource(ctx context.Context, in provider.Provider) (resource.Resource, diag.Diagnostics) {
-	log.Println("Ian-recource.go_NewResource")
 	provider, diags := convertProviderType(in)
 
 	return nodeResource{
@@ -129,7 +127,6 @@ type nodeResource struct {
 }
 
 func (r nodeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	log.Println("Ian-recource.go_Create")
 	var data onFinalityNode
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -177,7 +174,6 @@ func (r nodeResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r nodeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	log.Println("Ian-recource.go_Read")
 	var data onFinalityNode
 
 	diags := req.State.Get(ctx, &data)
@@ -223,7 +219,6 @@ func (r nodeResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r nodeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	log.Println("Ian-recource.go_Update")
 	var plan onFinalityNode
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -386,8 +381,6 @@ func (r nodeResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 func (r nodeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-
-	//resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 	idSlice := strings.Split(req.ID, ":")
 	wsId, err := strconv.ParseInt(idSlice[0], 10, 64)
 	if err != nil {

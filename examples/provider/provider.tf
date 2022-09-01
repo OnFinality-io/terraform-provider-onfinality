@@ -17,16 +17,16 @@ provider "onfinality" {
 }
 
 resource "onfinality_node" "n1" {
-  workspace_id         = 6635707676612587520
-  network_spec_key     = "polkadot"
+  workspace_id     = 6635707676612587520
+  network_spec_key = "polkadot"
   node_spec = {
-    key = "unit"
+    key        = "unit"
     multiplier = 4
   }
-  node_type            = "full"
-  node_name            = "ian test2"
-  cluster_hash         = "jm"
-  storage              = "100Gi"
-  image_version        = "v0.9.27"
-  stopped = false
+  node_type     = "full"
+  node_name     = "ian test2"
+  cluster_hash  = "jm"
+  storage       = "100Gi"
+  image_version = "v0.9.27"
+  stopped       = false
 }
