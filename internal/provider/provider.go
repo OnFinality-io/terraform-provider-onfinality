@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-
+	onf "github.com/OnFinality-io/onf-cli/pkg/service"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -11,11 +11,11 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
-var _ provider.Provider = &scaffoldingProvider{}
+var _ provider.Provider = &onfinalityProvider{}
 
 // provider satisfies the tfsdk.Provider interface and usually is included
 // with all Resource and DataSource implementations.
-type scaffoldingProvider struct {
+type onfinalityProvider struct {
 	// client can contain the upstream provider SDK or HTTP client used to
 	// communicate with the upstream service. Resource and DataSource
 	// implementations can then make calls using this client.
@@ -36,12 +36,14 @@ type scaffoldingProvider struct {
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	Example types.String `tfsdk:"example"`
+	AccessKey types.String `tfsdk:"access_key"`
+	SecretKey types.String `tfsdk:"secret_key"`
 }
 
-func (p *scaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+func (p *onfinalityProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data providerData
 	diags := req.Config.Get(ctx, &data)
+	onf.Init(data.AccessKey.Value, data.SecretKey.Value, "https://api.onfinality.io/api")
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
@@ -57,24 +59,27 @@ func (p *scaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	p.configured = true
 }
 
-func (p *scaffoldingProvider) GetResources(ctx context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
+func (p *onfinalityProvider) GetResources(ctx context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
 	return map[string]provider.ResourceType{
-		"scaffolding_example": exampleResourceType{},
+		"onfinality_node": onFinalityNode{},
 	}, nil
 }
 
-func (p *scaffoldingProvider) GetDataSources(ctx context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	return map[string]provider.DataSourceType{
-		"scaffolding_example": exampleDataSourceType{},
-	}, nil
+func (p *onfinalityProvider) GetDataSources(ctx context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
+	return map[string]provider.DataSourceType{}, nil
 }
 
-func (p *scaffoldingProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (p *onfinalityProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"example": {
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+			"access_key": {
+				MarkdownDescription: "access key for https://app.onfinality.io, use env TF_VAR_onf_access_key to set up",
+				Required:            true,
+				Type:                types.StringType,
+			},
+			"secret_key": {
+				MarkdownDescription: "secret key for https://app.onfinality.io, use env TF_VAR_onf_secret_key to set up",
+				Required:            true,
 				Type:                types.StringType,
 			},
 		},
@@ -83,7 +88,7 @@ func (p *scaffoldingProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &scaffoldingProvider{
+		return &onfinalityProvider{
 			version: version,
 		}
 	}
@@ -92,19 +97,19 @@ func New(version string) func() provider.Provider {
 // convertProviderType is a helper function for NewResource and NewDataSource
 // implementations to associate the concrete provider type. Alternatively,
 // this helper can be skipped and the provider type can be directly type
-// asserted (e.g. provider: in.(*scaffoldingProvider)), however using this can prevent
+// asserted (e.g. provider: in.(*onfinalityProvider)), however using this can prevent
 // potential panics.
-func convertProviderType(in provider.Provider) (scaffoldingProvider, diag.Diagnostics) {
+func convertProviderType(in provider.Provider) (onfinalityProvider, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	p, ok := in.(*scaffoldingProvider)
+	p, ok := in.(*onfinalityProvider)
 
 	if !ok {
 		diags.AddError(
 			"Unexpected Provider Instance Type",
 			fmt.Sprintf("While creating the data source or resource, an unexpected provider type (%T) was received. This is always a bug in the provider code and should be reported to the provider developers.", p),
 		)
-		return scaffoldingProvider{}, diags
+		return onfinalityProvider{}, diags
 	}
 
 	if p == nil {
@@ -112,7 +117,7 @@ func convertProviderType(in provider.Provider) (scaffoldingProvider, diag.Diagno
 			"Unexpected Provider Instance Type",
 			"While creating the data source or resource, an unexpected empty provider instance was received. This is always a bug in the provider code and should be reported to the provider developers.",
 		)
-		return scaffoldingProvider{}, diags
+		return onfinalityProvider{}, diags
 	}
 
 	return *p, diags
