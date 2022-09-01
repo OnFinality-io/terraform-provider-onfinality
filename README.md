@@ -92,6 +92,12 @@ resource "onfinality_node" "n1" {
 
 ```
 
+## Import running nodes
+1. Define the resource in .tf file
+2. run ```
+TF_VAR_onf_access_key=<your_access_key> TF_VAR_onf_secret_key="<your_secret_key>" terraform import onfinality_node.<resource_name> <wsId>:<nodeId> 
+```
+
 ## Developing the Provider
 
 If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
