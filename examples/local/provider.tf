@@ -28,5 +28,5 @@ resource "onfinality_node" "n1" {
   cluster_hash  = "jm"
   storage       = "100Gi"
   image_version = "v0.9.27"
-  stopped       = false
+  #  stopped       = true
 }

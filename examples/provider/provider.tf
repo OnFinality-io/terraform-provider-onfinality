@@ -1,9 +1,8 @@
 terraform {
   required_providers {
     onfinality = {
-      source  = "terraform.local/local/onfinality"
-      version = "1.0.0"
-      # Other parameters...
+      source  = "OnFinality-io/onfinality"
+      version = "0.1.0"
     }
   }
 }

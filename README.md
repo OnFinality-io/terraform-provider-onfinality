@@ -44,6 +44,46 @@ export TF_VAR_onf_access_key=...
 export TF_VAR_onf_secret_key=...
 ```
 
+## Doc
+[onfinality_node](docs/resources/onfinality_node.md)
+
+## Examples
+### Manage OnFinality Nodes
+```terraform
+terraform {
+  required_providers {
+    onfinality = {
+      source  = "terraform.local/local/onfinality"
+      version = "1.0.0"
+      # Other parameters...
+    }
+  }
+}
+
+variable "onf_access_key" {}
+variable "onf_secret_key" {}
+
+provider "onfinality" {
+  access_key = var.onf_access_key
+  secret_key = var.onf_secret_key
+}
+
+resource "onfinality_node" "n1" {
+  workspace_id     = 6635707676612587520
+  network_spec_key = "polkadot"
+  node_spec = {
+    key        = "unit"
+    multiplier = 4
+  }
+  node_type     = "full"
+  node_name     = "ian test2"
+  cluster_hash  = "jm"
+  storage       = "100Gi"
+  image_version = "v0.9.27"
+}
+
+```
+
 ## Developing the Provider
 
 If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
@@ -59,3 +99,7 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Local Debug
+* use examples/local
+* run with `TF_LOG_PROVIDER=debug`

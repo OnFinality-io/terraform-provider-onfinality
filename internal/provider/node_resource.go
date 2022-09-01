@@ -44,7 +44,22 @@ type onFinalityNode struct {
 func (t onFinalityNode) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Example resource",
+		MarkdownDescription: `
+resource "onfinality_node" "n1" {
+  workspace_id     = 6635707676612587520
+  network_spec_key = "polkadot"
+  node_spec = {
+    key        = "unit"
+    multiplier = 4
+  }
+  node_type     = "full"
+  node_name     = "ian test2"
+  cluster_hash  = "jm"
+  storage       = "100Gi"
+  image_version = "v0.9.27"
+#  stopped       = true
+}
+`,
 
 		Attributes: map[string]tfsdk.Attribute{
 			"workspace_id": {

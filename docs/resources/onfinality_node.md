@@ -3,12 +3,38 @@
 page_title: "onfinality_node Resource - onfinality-terraform-provider"
 subcategory: ""
 description: |-
-  Example resource
+  resource "onfinalitynode" "n1" {
+    workspaceid     = 6635707676612587520
+    networkspeckey = "polkadot"
+    nodespec = {
+      key        = "unit"
+      multiplier = 4
+    }
+    nodetype     = "full"
+    nodename     = "ian test2"
+    clusterhash  = "jm"
+    storage       = "100Gi"
+    image_version = "v0.9.27"
+  stopped       = true
+  }
 ---
 
 # onfinality_node (Resource)
 
-Example resource
+resource "onfinality_node" "n1" {
+  workspace_id     = 6635707676612587520
+  network_spec_key = "polkadot"
+  node_spec = {
+    key        = "unit"
+    multiplier = 4
+  }
+  node_type     = "full"
+  node_name     = "ian test2"
+  cluster_hash  = "jm"
+  storage       = "100Gi"
+  image_version = "v0.9.27"
+#  stopped       = true
+}
 
 
 
