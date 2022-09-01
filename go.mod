@@ -3,7 +3,7 @@ module github.com/hashicorp/terraform-provider-scaffolding-framework
 go 1.18
 
 require (
-	github.com/OnFinality-io/onf-cli v0.3.9
+	github.com/OnFinality-io/onf-cli v0.3.10
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
 	github.com/hashicorp/terraform-plugin-framework v0.11.1
 	github.com/hashicorp/terraform-plugin-go v0.14.0
@@ -93,3 +93,7 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )
+
+//replace (
+//	github.com/OnFinality-io/onf-cli => ../onf-cli
+//)

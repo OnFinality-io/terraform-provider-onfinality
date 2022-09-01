@@ -6,13 +6,13 @@ import (
 	"github.com/OnFinality-io/onf-cli/pkg/models"
 	onf "github.com/OnFinality-io/onf-cli/pkg/service"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -260,5 +260,45 @@ func (r nodeResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 func (r nodeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+
+	//resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	idSlice := strings.Split(req.ID, ":")
+	wsId, err := strconv.ParseInt(idSlice[0], 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Id Error", fmt.Sprintf("Unable to convert wdId to int64, got error: %s", err))
+		return
+	}
+	id, err := strconv.ParseInt(idSlice[1], 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Id Error", fmt.Sprintf("Unable to convert nodeId to int64, got error: %s", err))
+		return
+	}
+
+	node, err := onf.GetNodeDetail(uint64(wsId), uint64(id))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to get node, got error: %s", err))
+		return
+	}
+
+	if node.Status == "terminated" {
+		tflog.Error(ctx, "Node has been terminated")
+		return
+	}
+	imageSlice := strings.Split(node.Image, ":")
+	diags := resp.State.Set(ctx, &onFinalityNode{
+		WorkspaceId:    types.Int64{Value: int64(node.WorkspaceID)},
+		NetworkSpecKey: types.String{Value: node.NetworkSpecKey},
+		NodeSpec: nodeSpec{
+			Key:        types.String{Value: node.NodeSpec},
+			Multiplier: types.Int64{Value: int64(node.NodeSpecMultiplier)},
+		},
+		NodeType:     types.String{Value: node.NodeType},
+		NodeName:     types.String{Value: node.Name},
+		ClusterHash:  types.String{Value: node.ClusterHash},
+		Storage:      types.String{Value: node.Storage},
+		ImageVersion: types.String{Value: imageSlice[len(imageSlice)-1]},
+		Image:        types.String{Value: node.Image},
+		Id:           types.Int64{Value: int64(node.ID)},
+	})
+	resp.Diagnostics.Append(diags...)
 }
