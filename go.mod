@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.14.0
 	github.com/hashicorp/terraform-plugin-log v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.21.0
-	k8s.io/apimachinery v0.25.0
+	k8s.io/apimachinery v0.25.3
 )
 
 require (
